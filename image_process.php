@@ -4,7 +4,7 @@
  * Verify if the badge meets the specified requirements.
  *
  * @param string $image_path The path to the image file.
- * @return array An array indicating if the badge is valid along with a message.
+ * @return array Returns true if image requirements are met and a success message, otherwise false and an error message, at each step. An array indicating if the badge is valid along with a message.
  */
 function verify_badge($image_path)
 {
@@ -18,12 +18,28 @@ function verify_badge($image_path)
     $width = imagesx($image);
     $height = imagesy($image);
 
+    // Check image size pixels
     if ($width == 512 && $height == 512) {
         return [true, "Yay! The image size is 512x512 pixels. 🎉"];
     } else {
         return [false, "Oopsy! The image size is not 512x512 pixels. 🤔"];
     }
 
+    // Check non-transparent pixels within a circle
+    $centerX = $width / 2;
+    $centerY = $height / 2;
+    $radius = 256;
+    for ($y = 0; $y < $height; $y++) {
+        for ($x = 0; $x < $width; $x++) {
+            $alpha = (imagecolorat($image, $x, $y) >> 24) & 0x7F;
+            $distance = sqrt(pow($x - $centerX, 2) + pow($y - $centerY, 2));
+            if ($distance > $radius && $alpha < 127) {
+                return [false, "Oopsy! There are non-transparent pixels outside the circle. 🤔"];
+            }
+        }
+    }
+
+    return [true, "Yay! All pixels are within the circle. 🎉 😊"];
 
 
     // // Check if the image is 512x512 pixels, if not, resize it
@@ -103,10 +119,16 @@ function verify_badge($image_path)
 
     // return [true, "The badge is valid"];
 }
-// using the function
+
+// test of image size pixels
 $imagePath = 'img/ff/zack.png';
 list($success, $message) = verify_badge($imagePath);
 echo "$success: $message";
+
+// test of non-transparent pixels within a circle
+
+// test of colors in the badge
+
 // // Example usage
 // list($result, $message) = verify_badge("img/ff/zack.png");
 // echo "$result: $message";
