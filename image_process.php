@@ -1,208 +1,105 @@
 <?php
 
 /**
- * Check that the image size is 512x512 pixels.
+ * Verify if the badge meets the specified requirements.
  *
- * @param string $image_path The path of the image to check.
- * @return bool|string Returns true if the image size is correct, otherwise a string with an error message.
+ * @param string $image_path The path to the image file.
+ * @return array An array indicating if the badge is valid along with a message.
  */
-function check_image_size($image_path)
+function verify_badge($image_path)
 {
-    list($width, $height) = getimagesize($image_path);
-    if ($width == 512 && $height == 512) {
-        return true;
-    } else {
-        return "Oopsy! The image size is not 512x512 pixels. 😞";
-    }
-}
-
-/**
- * Check that all non-transparent pixels are within a circle.
- *
- * @param string $image_path The path of the image to check.
- * @return string Returns a success message if all non-transparent pixels are within the circle, otherwise an error message.
- */
-function check_pixels_within_circle($image_path)
-{
-    $img = imagecreatefrompng($image_path);
-    if (!$img) {
-        return "Oops! Unable to load the image. 😞";
+    // Load the image
+    $image = imagecreatefrompng($image_path);
+    if (!$image) {
+        return [false, "Oops! Unable to load the image. 😞"];
     }
 
-    // Set the circle parameters
-    $radius = 256;
-    $center_x = 256;
-    $center_y = 256;
+    // Get image dimensions
+    $width = imagesx($image);
+    $height = imagesy($image);
 
-    // Iterate over every pixel in the image
+    // Check if the image is 512x512 pixels, if not, resize it
+    if ($width != 512 || $height != 512) {
+        $resized_image = imagecreatetruecolor(512, 512);
+        imagecopyresampled($resized_image, $image, 0, 0, 0, 0, 512, 512, $width, $height);
+        imagedestroy($image);
+        // return [false, "Oopsy! The image size is not 512x512 pixels. 😞"];
+        $image = $resized_image;
+    }
+
+    // Apply circular mask
+    $radius = 256; // Radius of the circle
+
+    $center_x = 256; // X-coordinate of the center of the circle
+    $center_y = 256; // Y-coordinate of the center of the circle
+
+    // Loop through each pixel of the image
+    $happy_color_count = 0;
+    $total_pixels = 0;
+
+    // Limit the number of pixels displayed to avoid overloading the output
+    $debug_limit = 10;
+
+    //! Unworking! 
     for ($y = 0; $y < 512; $y++) {
+        echo "Valeur de y : $y\n"; 
         for ($x = 0; $x < 512; $x++) {
-            // Calculate the distance between the pixel and the center of the circle
-            $distance = sqrt(pow($x - $center_x, 2) + pow($y - $center_y, 2));
-            // Get the alpha component of the pixel
-            $alpha = (imagecolorat($img, $x, $y) >> 24) & 0x7F;
+            echo "Valeur de x : $x\n"; 
+            // Calculate the distance from the current pixel to the center of the circle
+            $distance_from_center = sqrt(abs(pow($x - $center_x, 2)) + abs(pow($y - $center_y, 2)));
             
-             // Debugging: Output pixel coordinates to a log file
-             $file = fopen("pixel_debug.log", "a");
-             fwrite($file, "Pixel coordinates: ($x, $y)\n");
-             fclose($file);
 
-            // Check if the pixel is outside the circle and not transparent
-            if ($distance > $radius && $alpha < 127) {
-                return "Oopsy! Some pixels are outside the circle. 🤔";
+            // Get the color of the current pixel
+            $color_index = imagecolorat($image, $x, $y);
+            $alpha = ($color_index >> 24) & 0x7F;
+
+            echo "Pixel à la position ($x, $y) : distance_from_center = $distance_from_center, alpha = $alpha\n";
+
+            // Limit the number of pixels displayed to avoid overloading the output
+            $debug_limit--;
+            if ($debug_limit <= 0) {
+                break 2;
             }
-        }
-    }
-    return "Great! All pixels are within the circle. 🎉";
-}
 
-/**
- * Check if a color gives a "happy" feeling.
- *
- * @param int $color The color value (in hexadecimal).
- * @return bool Returns true if the color gives a "happy" feeling, otherwise false.
- */
-function check_happy_color($color)
-{
-    // Extract the RGB components from the color value
-    $r = ($color >> 16) & 0xFF;
-    $g = ($color >> 8) & 0xFF;
-    $b = $color & 0xFF;
-
-    // Normalize RGB values to range [0, 1]
-    $r /= 255.0;
-    $g /= 255.0;
-    $b /= 255.0;
-
-    // Calculate the HSV components
-    $max = max($r, $g, $b);
-    $min = min($r, $g, $b);
-    $v = $max;
-    $delta = $max - $min;
-
-    // Calculate saturation
-    if ($max != 0) {
-        $s = $delta / $max;
-    } else {
-        $s = 0;
-    }
-
-    // Define thresholds for brightness and saturation
-    $brightness_threshold = 0.6;
-    $saturation_threshold = 0.4;
-
-    // Check if the color meets the criteria for a "happy" feeling
-    return $v > $brightness_threshold && $s > $saturation_threshold;
-}
-
-/**
- * Check that all colors in the image give a "happy" feeling.
- *
- * @param string $image_path The path of the image to check.
- * @return string Returns a success message if all colors give a "happy" feeling, otherwise an error message.
- */
-function check_happy_colors($image_path)
-{
-    $img = imagecreatefrompng($image_path);
-    if (!$img) {
-        return "Oops! Unable to load the image. 😞";
-    }
-
-    // Iterate over every pixel in the image
-    for ($y = 0; $y < 512; $y++) {
-        for ($x = 0; $x < 512; $x++) {
-            // Get the color of the pixel
-            $color = imagecolorat($img, $x, $y);
-            // Check if the color gives a "happy" feeling
-            if (!check_happy_color($color)) {
-                return "Oh no! Some colors don't give a happy feeling. 😞";
+            // Check if the pixel is outside the circle and non-transparent
+            if ($distance_from_center > $radius && $alpha < 127) {
+                imagedestroy($image);
+                return [false, "Oopsy! Some pixels are outside the circle. 🤔"];
             }
-        }
-    }
-    return "Hooray! All colors give a happy feeling. 🎉";
-}
 
+            // If the pixel is non-transparent, check if it gives a "happy" feeling
+            if ($alpha < 127) { // Non-transparent pixel
+                $total_pixels++;
+                $r = ($color_index >> 16) & 0xFF;
+                $g = ($color_index >> 8) & 0xFF;
+                $b = $color_index & 0xFF;
 
-/**
- * Convert the given image to a badge object with specified criteria.
- *
- * @param string $image_path The path of the image to convert.
- * @return mixed Returns the badge object if successful, otherwise a string with an error message.
- */
-function convert_image_to_badge($image_path)
-{
-    // Step 1: Check image size
-    if (!check_image_size($image_path)) {
-        return "Oops! The image size is not 512x512 pixels. 😞";
-    }
+                // Example condition for "happy" colors: bright and vibrant colors
+                $brightness = ($r + $g + $b) / 3;
+                $saturation = max($r, $g, $b) - min($r, $g, $b);
 
-    // Step 2: Check pixels within circle
-    if (!check_pixels_within_circle($image_path)) {
-        return "Oops! Some pixels are outside the circle. 🤔";
-    }
-
-    // Step 3: Check happy colors
-    if (!check_happy_colors($image_path)) {
-        return "Oops! Some colors don't give a happy feeling. 😞";
-    }
-
-    // Load the original image
-    $original_img = imagecreatefrompng($image_path);
-    if (!$original_img) {
-        return "Oops! Unable to load the image. 😞";
-    }
-
-    // Create a blank canvas for the badge object
-    $badge = imagecreatetruecolor(512, 512);
-    // Set background color to white
-    $white = imagecolorallocate($badge, 255, 255, 255);
-    imagefill($badge, 0, 0, $white);
-
-    // Set the circle parameters
-    $radius = 256;
-    $center_x = 256;
-    $center_y = 256;
-
-    echo "Center X: $center_x, Center Y: $center_y, Radius: $radius";
-
-    echo "Before loop";
-
-    // Copy the original image onto the badge canvas, only within the circle
-    for ($y = 0; $y < 512; $y++) {
-        for ($x = 0; $x < 512; $x++) {
-            // Calculate the distance between the pixel and the center of the circle
-            $distance = sqrt(pow($x - $center_x, 2) + pow($y - $center_y, 2));
-            // Check if the pixel is within the circle
-            if ($distance <= $radius && $x >= 0 && $x < 512 && $y >= 0 && $y < 512) {
-                // Get the color of the pixel from the original image
-                $color = imagecolorat($original_img, $x, $y);
-                // Copy the pixel to the badge canvas
-                // imagesetpixel($badge, $x, $y, $color);
+                if ($brightness > 150 && $saturation > 100) {
+                    $happy_color_count++;
+                }
             }
         }
     }
 
-    echo "After loop";
+    imagedestroy($image);
 
-    // Free memory
-    imagedestroy($original_img);
+    // Check if the percentage of "happy" colors is less than 10%
+    if ($happy_color_count / $total_pixels < 0.1) { // Example threshold
+        return [false, "Oh no! Some colors don't give a happy feeling. 😞"];
+    }
 
-    // Return the badge object
-    return $badge;
+    return [true, "The badge is valid"];
 }
 
-// Code test
-$image_path = "docs/img/image.png";
-$result_size = check_image_size($image_path);
-$result_circle = check_pixels_within_circle($image_path);
-$result_colors = check_happy_colors($image_path);
-$result_conversion = convert_image_to_badge($image_path);
+// Example usage
+list($result, $message) = verify_badge("img/ff/aerith.png");
+echo "$result: $message";
 
-echo "Result for image size: " . ($result_size ? "Image size is correct." : "Image size is incorrect.");
-echo "Result for pixels within circle: " . $result_circle;
-echo "Result for happy colors: " . $result_colors;
-if (is_string($result_conversion)) {
-    echo "Conversion error: " . $result_conversion;
-} else {
-    echo "Conversion successful!";
-}
+/**
+ * The pictures, which are contained in the img folder, are pictures which I took while playing. I therefore have right to use them, specifying if necessary that the rights belong to Square Enix.
+ * 
+ */
