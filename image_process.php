@@ -18,88 +18,105 @@ function verify_badge($image_path)
     $width = imagesx($image);
     $height = imagesy($image);
 
-    // Check if the image is 512x512 pixels, if not, resize it
-    if ($width != 512 || $height != 512) {
-        $resized_image = imagecreatetruecolor(512, 512);
-        imagecopyresampled($resized_image, $image, 0, 0, 0, 0, 512, 512, $width, $height);
-        imagedestroy($image);
-        // return [false, "Oopsy! The image size is not 512x512 pixels. 😞"];
-        $image = $resized_image;
+    if ($width == 512 && $height == 512) {
+        return [true, "Yay! The image size is 512x512 pixels. 🎉"];
+    } else {
+        return [false, "Oopsy! The image size is not 512x512 pixels. 🤔"];
     }
+
+
+
+    // // Check if the image is 512x512 pixels, if not, resize it
+    // if ($width != 512 || $height != 512) {
+    //     $resized_image = imagecreatetruecolor(512, 512);
+    //     imagecopyresampled($resized_image, $image, 0, 0, 0, 0, 512, 512, $width, $height);
+    //     imagedestroy($image);
+    //     // return [false, "Oopsy! The image size is not 512x512 pixels. 😞"];
+    //     $image = $resized_image;
+    // }
+
 
     // Apply circular mask
-    $radius = 256; // Radius of the circle
+    // $radius = 256; // Radius of the circle
 
-    $center_x = 256; // X-coordinate of the center of the circle
-    $center_y = 256; // Y-coordinate of the center of the circle
+    // $center_x = 256; // X-coordinate of the center of the circle
+    // $center_y = 256; // Y-coordinate of the center of the circle
 
-    // Loop through each pixel of the image
-    $happy_color_count = 0;
-    $total_pixels = 0;
+    // // Loop through each pixel of the image
+    // $happy_color_count = 0;
+    // $total_pixels = 0;
 
-    // Limit the number of pixels displayed to avoid overloading the output
-    $debug_limit = 10;
+    // // Limit the number of pixels displayed to avoid overloading the output
+    // $debug_limit = 10;
 
-    //! Unworking! 
-    for ($y = 0; $y < 512; $y++) {
-        echo "Valeur de y : $y\n"; 
-        for ($x = 0; $x < 512; $x++) {
-            echo "Valeur de x : $x\n"; 
-            // Calculate the distance from the current pixel to the center of the circle
-            $distance_from_center = sqrt(abs(pow($x - $center_x, 2)) + abs(pow($y - $center_y, 2)));
-            
+    // //! Unworking! 
+    // for ($y = 0; $y < 512; $y++) {
+    //     echo "Valeur de y : $y\n"; 
+    //     for ($x = 0; $x < 512; $x++) {
+    //         echo "Valeur de x : $x\n"; 
+    //         // Calculate the distance from the current pixel to the center of the circle
+    //         $distance_from_center = sqrt(abs(pow($x - $center_x, 2)) + abs(pow($y - $center_y, 2)));
 
-            // Get the color of the current pixel
-            $color_index = imagecolorat($image, $x, $y);
-            $alpha = ($color_index >> 24) & 0x7F;
 
-            echo "Pixel à la position ($x, $y) : distance_from_center = $distance_from_center, alpha = $alpha\n";
+    //         // Get the color of the current pixel
+    //         $color_index = imagecolorat($image, $x, $y);
+    //         $alpha = ($color_index >> 24) & 0x7F;
 
-            // Limit the number of pixels displayed to avoid overloading the output
-            $debug_limit--;
-            if ($debug_limit <= 0) {
-                break 2;
-            }
+    //         echo "Pixel à la position ($x, $y) : distance_from_center = $distance_from_center, alpha = $alpha\n";
 
-            // Check if the pixel is outside the circle and non-transparent
-            if ($distance_from_center > $radius && $alpha < 127) {
-                imagedestroy($image);
-                return [false, "Oopsy! Some pixels are outside the circle. 🤔"];
-            }
+    //         // Limit the number of pixels displayed to avoid overloading the output
+    //         $debug_limit--;
+    //         if ($debug_limit <= 0) {
+    //             break 2;
+    //         }
 
-            // If the pixel is non-transparent, check if it gives a "happy" feeling
-            if ($alpha < 127) { // Non-transparent pixel
-                $total_pixels++;
-                $r = ($color_index >> 16) & 0xFF;
-                $g = ($color_index >> 8) & 0xFF;
-                $b = $color_index & 0xFF;
+    //         // Check if the pixel is outside the circle and non-transparent
+    //         if ($distance_from_center > $radius && $alpha < 127) {
+    //             imagedestroy($image);
+    //             return [false, "Oopsy! Some pixels are outside the circle. 🤔"];
+    //         }
 
-                // Example condition for "happy" colors: bright and vibrant colors
-                $brightness = ($r + $g + $b) / 3;
-                $saturation = max($r, $g, $b) - min($r, $g, $b);
+    //         // If the pixel is non-transparent, check if it gives a "happy" feeling
+    //         if ($alpha < 127) { // Non-transparent pixel
+    //             $total_pixels++;
+    //             $r = ($color_index >> 16) & 0xFF;
+    //             $g = ($color_index >> 8) & 0xFF;
+    //             $b = $color_index & 0xFF;
 
-                if ($brightness > 150 && $saturation > 100) {
-                    $happy_color_count++;
-                }
-            }
-        }
-    }
+    //             // Example condition for "happy" colors: bright and vibrant colors
+    //             $brightness = ($r + $g + $b) / 3;
+    //             $saturation = max($r, $g, $b) - min($r, $g, $b);
 
-    imagedestroy($image);
+    //             if ($brightness > 150 && $saturation > 100) {
+    //                 $happy_color_count++;
+    //             }
+    //         }
+    //     }
+    // }
 
-    // Check if the percentage of "happy" colors is less than 10%
-    if ($happy_color_count / $total_pixels < 0.1) { // Example threshold
-        return [false, "Oh no! Some colors don't give a happy feeling. 😞"];
-    }
+    // imagedestroy($image);
 
-    return [true, "The badge is valid"];
+    // // Check if the percentage of "happy" colors is less than 10%
+    // if ($happy_color_count / $total_pixels < 0.1) { // Example threshold
+    //     return [false, "Oh no! Some colors don't give a happy feeling. 😞"];
+    // }
+
+    // return [true, "The badge is valid"];
 }
-
-// Example usage
-list($result, $message) = verify_badge("img/ff/aerith.png");
-echo "$result: $message";
+// using the function
+$imagePath = 'img/ff/zack.png';
+list($success, $message) = verify_badge($imagePath);
+echo "$success: $message";
+// // Example usage
+// list($result, $message) = verify_badge("img/ff/zack.png");
+// echo "$result: $message";
 
 /**
- * The pictures, which are contained in the img folder, are pictures which I took while playing. I therefore have right to use them, specifying if necessary that the rights belong to Square Enix.
- * 
+ * Note:
+ * The pictures, which are contained in the 'img' folder, are ones which I took while playing. Therefore, I am allowed to use them, specifying, if necessary, that the rights belong to Square Enix.
+ * I've put in my best effort to complete this exercise. 
+ * I conducted extensive research and utilized an AI to discuss various topics and obtain personalized explanations that the documentation doesn't provide.
+ * Moreover, I would be grateful if you could bear in mind that I have very little coding experience.
+ * Please feel free to provide feedback on the code, indicating what's correct and what's incorrect, as well as any areas for improvement.
+ * I've read that Python would have been more suitable for this exercise. Nonetheless, since I've never used this language, I chose to use php, which I'm quite familiar with.
  */
