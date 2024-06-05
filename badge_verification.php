@@ -24,11 +24,6 @@ function verify_badge($image_path)
     $height = imagesy($image);
 
     // Check image size pixels
-    // if ($width == 512 && $height == 512) {
-    //     return [true, "Yay! The image size is 512x512 pixels. 🎉"];
-    // } else {
-    //     return [false, "Oopsy! The image size is not 512x512 pixels. 🤔"];
-    // }
     if ($width != 512 || $height != 512) {
         return [false, "Oopsy! The image size is not 512x512 pixels. 🤔"];
     }
@@ -44,6 +39,7 @@ function verify_badge($image_path)
             $alpha = (imagecolorat($image, $x, $y) >> 24) & 0x7F;
             $distance = sqrt(pow($x - $centerX, 2) + pow($y - $centerY, 2));
             if ($distance > $radius && $alpha < 127) {
+                echo "Non-transparent pixel found outside the circle at ($x, $y) with distance $distance\n";
                 return [false, "Oopsy! There are non-transparent pixels outside the circle. 🤔"];
             }
         }
@@ -51,7 +47,7 @@ function verify_badge($image_path)
 
     echo "Yay! All pixels are within the circle. 🎉 😊\n";
     
-    // Define happy colors (as an example, using RGB values)
+    // Define happy colors (as an example, using RGB values) — these are very colorful though
     $happy_colors = [
         [255, 223, 186], // Light Peach
         [255, 255, 153], // Light Yellow
@@ -99,8 +95,8 @@ function verify_badge($image_path)
     
 }
 
-// test 
-$imagePath = 'img/ff/zack.png';
+// Test badge verification
+$imagePath = 'img/test/test04.png';
 list($success, $message) = verify_badge($imagePath);
 echo "$success: $message";
 
@@ -113,3 +109,5 @@ echo "$success: $message";
  * Please feel free to provide feedback on the code, indicating what's correct and what's incorrect, as well as any areas for improvement.
  * I've read that Python would have been more suitable for this exercise. Nonetheless, since I've never used this language, I chose to use php, which I'm quite familiar with.
  */
+
+ ?>

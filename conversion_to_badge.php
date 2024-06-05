@@ -24,11 +24,11 @@ function convert_to_badge($image_path, $output_path)
             $image = imagecreatefromgif($image_path);
             break;
         default:
-            return [false, "Unsupported image format. Please upload a JPEG, PNG, or GIF file."];
+            return [false, "Oopsy! This image format is not supported. Please upload a JPEG, PNG, or GIF file. 🤔"];
     }
 
     if (!$image) {
-        return [false, "Unable to load the image. Please upload a valid image file."];
+        return [false, "Oopsy! Unable to load the image. Please upload a valid image file. 🤔"];
     }
 
     // Create a new 512x512 image
@@ -110,11 +110,20 @@ function convert_to_badge($image_path, $output_path)
     imagedestroy($new_image);
     imagedestroy($mask);
 
-    return [true, "The image has been successfully converted to the specified badge format."];
+    return [true, "Yay! The image has been successfully converted to the specified badge format. 🎉 ✌️"];
 }
+
+$outputDirectory = realpath('img/output/');
+if (!file_exists($outputDirectory)) {
+    mkdir($outputDirectory, 0777, true); 
+}
+
+$outputDirectory = realpath($outputDirectory);
 
 // Test conversion to badge format
 $imagePath = 'img/test/test02.png';
-$outputPath = 'img/output/badge_test02.png';
+$outputPath = $outputDirectory . '/badge_test06.png';
 list($success, $message) = convert_to_badge($imagePath, $outputPath);
 echo "$success: $message\n";
+
+?>
