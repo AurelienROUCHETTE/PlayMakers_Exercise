@@ -110,4 +110,4 @@ echo "$success: $message";
  * I've read that Python would have been more suitable for this exercise. Nonetheless, since I've never used this language, I chose to use php, which I'm quite familiar with.
  */
 
- ?>
+?>

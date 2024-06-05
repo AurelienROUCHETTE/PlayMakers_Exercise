@@ -113,6 +113,7 @@ function convert_to_badge($image_path, $output_path)
     return [true, "Yay! The image has been successfully converted to the specified badge format. 🎉 ✌️"];
 }
 
+// 
 $outputDirectory = realpath('img/output/');
 if (!file_exists($outputDirectory)) {
     mkdir($outputDirectory, 0777, true); 
